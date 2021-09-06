@@ -2,8 +2,9 @@
 ## Instructions
 
 ### Python
-
-To run the code in Python, please go into the `python` folder and execute the Python scripts in each of the respective sub-folders.
+Pre-requisite - Install python packages using below commands
+"pip3 install -r requirements.txt"
+To run the code in Python, execute the Python script "app.py" in folder.
 
 # AI Courses by OpenCV
 
