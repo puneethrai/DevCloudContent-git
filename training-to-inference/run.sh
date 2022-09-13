@@ -40,7 +40,9 @@ EOT
 pip install -r requirements.txt
 git clone ${REPO}
 sed -e "s/display_handle = showarray(result, display_handle)/display_handle=showarray(result, display_handle);cv2.imwrite(str(next_frame_id_to_show) + '_inference.jpeg', result)/" ${UTIL_FILE} > "${UTIL_FILE}_temp"
-mv "${UTIL_FILE}_temp" ${UTIL_FILE}
+sed -e "s/fps = len(image_paths) \/ duration/fps = len(image_paths)\/duration;Path('\/mount_folder\/FP16').mkdir(parents=True, exist_ok=True);f = open('\/mount_folder\/FP16\/performance.txt', 'w');f.write(f'Throughput: {fps:.2f} FPS\\\\nLatency: {duration:.2f} s');f.close()/" "${UTIL_FILE}_temp" > "${UTIL_FILE}_temp2"
+rm -rf "${UTIL_FILE}_temp"
+mv "${UTIL_FILE}_temp2" ${UTIL_FILE}
 cd ${NOTEBOOK_PATH}
 jupyter nbconvert --to script ${NOTEBOOK_NAME}
 ipython ${INFERENCE_FILE}
