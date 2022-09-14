@@ -3,7 +3,7 @@ MOUNT=${1:-${MOUNT_PATH:-"/s3"}}
 REPO=${2:-${GITREPO:-"https://github.com/openvinotoolkit/openvino_notebooks.git"}}
 NOTEBOOK_PATH=${3:-${NOTEBOOK_LOCATION:-"openvino_notebooks/notebooks/210-ct-scan-live-inference"}}
 NOTEBOOK_NAME=${4:-${FILE:-"210-ct-scan-live-inference.ipynb"}}
-OUTPUT_DIR=${5:-${OUTPUT:-${NOTEBOOK_PATH}}}
+OUTPUT_DIR=${5:-${OUTPUT:-"/mount_folder"}}
 UTIL_FILE=${5:-${UTIL_FILE:-"openvino_notebooks/notebooks/utils/notebook_utils.py"}}
 PY_EXTENSION="py"
 INFERENCE_FILE=$(echo "$NOTEBOOK_NAME" | sed "s/ipynb/$PY_EXTENSION/")
@@ -14,7 +14,7 @@ echo "Inference Output: ${OUTPUT_DIR}"
 echo "Volume Mount path: ${MOUNT}"
 echo "Inference file to be used: ${INFERENCE_FILE}"
 echo "Util file to be modified: ${UTIL_FILE}"
-cd ${MOUNT}
+cd ${OUTPUT_DIR}
 cat <<EOT >> requirements.txt
 openvino-dev[onnx]==2022.1.0
 gdown
@@ -40,7 +40,7 @@ EOT
 pip install -r requirements.txt
 git clone ${REPO}
 sed -e "s/display_handle = showarray(result, display_handle)/display_handle=showarray(result, display_handle);cv2.imwrite(str(next_frame_id_to_show) + '_inference.jpeg', result)/" ${UTIL_FILE} > "${UTIL_FILE}_temp"
-sed -e "s/fps = len(image_paths) \/ duration/fps = len(image_paths)\/duration;Path('\/mount_folder\/FP16').mkdir(parents=True, exist_ok=True);f = open('\/mount_folder\/FP16\/performance.txt', 'w');f.write(f'Throughput: {fps:.2f} FPS\\\\nLatency: {duration:.2f} s');f.close()/" "${UTIL_FILE}_temp" > "${UTIL_FILE}_temp2"
+sed -e "s/fps = len(image_paths) \/ duration/fps = len(image_paths)\/duration;Path('FP16').mkdir(parents=True, exist_ok=True);f = open('FP16\/performance.txt', 'w');f.write(f'Throughput: {fps:.2f} FPS\\\\nLatency: {duration:.2f} s');f.close()/" "${UTIL_FILE}_temp" > "${UTIL_FILE}_temp2"
 rm -rf "${UTIL_FILE}_temp"
 mv "${UTIL_FILE}_temp2" ${UTIL_FILE}
 cd ${NOTEBOOK_PATH}
