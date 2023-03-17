@@ -1,10 +1,10 @@
 #!/bin/sh
 MOUNT=${1:-${MOUNT_PATH:-"/s3"}}
 REPO=${2:-${GITREPO:-"https://github.com/openvinotoolkit/openvino_notebooks.git"}}
-NOTEBOOK_PATH=${3:-${NOTEBOOK_LOCATION:-"openvino_notebooks/notebooks/210-ct-scan-live-inference"}}
-NOTEBOOK_NAME=${4:-${FILE:-"210-ct-scan-live-inference.ipynb"}}
+NOTEBOOK_PATH=${3:-${NOTEBOOK_LOCATION:-"openvino_notebooks/notebooks/110-ct-segmentation-quantize"}}
+NOTEBOOK_NAME=${4:-${FILE:-"110-ct-scan-live-inference.ipynb"}}
 OUTPUT_DIR=${5:-${OUTPUT:-"/mount_folder"}}
-UTIL_FILE=${5:-${UTIL_FILE:-"openvino_notebooks/notebooks/utils/notebook_utils.py"}}
+UTIL_FILE=${5:-${UTIL_FILE:-"openvino_notebooks/notebooks/110-ct-segmentation-quantize/110-ct-scan-live-inference.py"}}
 PY_EXTENSION="py"
 INFERENCE_FILE=$(echo "$NOTEBOOK_NAME" | sed "s/ipynb/$PY_EXTENSION/")
 PERFORMANCE_OUTPUT=${OUTPUT_DIR}/output/FP16
@@ -42,10 +42,13 @@ EOT
 
 pip install -r requirements.txt
 git clone ${REPO}
-sed -e "s#display_handle = show_array(result, display_handle)#display_handle=show_array(result, display_handle);Path('$INFERENCE_OUPUT').mkdir(parents=True, exist_ok=True);cv2.imwrite('$INFERENCE_OUPUT' + '/' + str(next_frame_id_to_show) + '_inference.jpeg', result)#" ${UTIL_FILE} > "${UTIL_FILE}_temp"
-sed -e "s#fps = len(image_paths) / duration#fps = len(image_paths)/duration;Path('$PERFORMANCE_OUTPUT').mkdir(parents=True, exist_ok=True);f = open('$PERFORMANCE_OUTPUT/performance.txt', 'w');f.write(f'Throughput: {fps:.2f} FPS\\\\nLatency: {duration:.2f} s');f.close()#" "${UTIL_FILE}_temp" > "${UTIL_FILE}_temp2"
+
+cd ${NOTEBOOK_PATH}
+jupyter nbconvert --to script ${NOTEBOOK_NAME}
+cd ${OUTPUT_DIR}
+sed -e "s#display.display(i)#display.display( i );Path('$INFERENCE_OUPUT').mkdir(parents=True, exist_ok=True);global count;count = (count + 1 if 'count' in globals() else 0);cv2.imwrite('$INFERENCE_OUPUT' + '/' + str(count) + '_inference.jpeg', frame)#" ${UTIL_FILE} > "${UTIL_FILE}_temp"
+sed -e "s#time_per_frame = 1 / fps#time_per_frame=1/fps;Path('$PERFORMANCE_OUTPUT').mkdir(parents=True, exist_ok=True);f = open('$PERFORMANCE_OUTPUT/performance.txt', 'w');f.write(f'Throughput: {fps:.2f} FPS\\\\nLatency: {time_per_frame:.2f} s');f.close()#" "${UTIL_FILE}_temp" > "${UTIL_FILE}_temp2"
 rm -rf "${UTIL_FILE}_temp"
 mv "${UTIL_FILE}_temp2" ${UTIL_FILE}
 cd ${NOTEBOOK_PATH}
-jupyter nbconvert --to script ${NOTEBOOK_NAME}
 ipython ${INFERENCE_FILE}
